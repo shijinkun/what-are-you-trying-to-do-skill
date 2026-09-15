@@ -1,6 +1,6 @@
 ---
 name: what-are-you-trying-to-do
-description: Use when a research, analysis, or decision request is vague, mixes concepts with measurements, or assumes that records from different groups are directly comparable.
+description: Use when a person asks AI to help with a vague goal, conflicting requirements, unclear success criteria, or a research or decision request with measurement, definition, comparability, or evidence risk.
 ---
 
 # What Are You Trying To Do?
@@ -16,6 +16,26 @@ silently filling missing facts.
 This is domain-neutral. Do not hard-code a discipline, material, instrument,
 metric, unit, or experimental condition. Use only the user's request, the
 complete question-and-answer history, and explicitly supplied context.
+
+## When To Use
+
+Use this skill when the answer could materially change because the user has not
+yet stated their goal, desired action, scope, constraints, or success criteria.
+Typical triggers include: “help me analyze this”, “make it better”, changing
+requirements, unclear decision rules, or requests to compare, generalize, or
+draw conclusions from records or evidence.
+
+For research and decision work, use it when there is a measurement, definition,
+comparability, or evidence risk. That is its difference from ordinary chat
+clarification: it checks whether the intended question can support the kind of
+answer the user is asking for.
+
+## When Not To Use
+
+Do not use this skill when the request is already specific, bounded, and has a
+clear deliverable and success criterion, such as “translate this paragraph” or
+“rename this file to the supplied name.” Do not create extra questions merely
+because a clarification workflow exists.
 
 ## Two Required Reviews
 
@@ -81,9 +101,28 @@ Only an explicit human response such as `确认`, `Y`, or `yes` may create the
 limited-precision state. Carry every unresolved threat and risk into the
 handoff. Never relabel it as validated.
 
-## Output Contract
+## Layered Output
 
-Return one JSON object with these keys and no surrounding prose:
+Separate the conversation experience from the machine handoff.
+
+### User-facing response
+
+Use the user's language. Do not show the JSON contract to the user unless they
+explicitly ask for it.
+
+- **Ask response:** State, in one concise sentence, what is still unclear and
+  ask exactly one highest-value question. Do not list all missing details.
+- **Confirm response:** Give a concise plain-language summary of the goal,
+  scope, requested action, success criteria, and material limitations. Ask the
+  user to confirm or correct it before downstream work begins.
+- **Limited-precision response:** Clearly state what will be explored, what is
+  uncertain, and which conclusions must not be drawn.
+
+### Machine handoff
+
+Store the following JSON contract in structured state, a tool payload, or a
+hidden metadata field. It is for downstream agents and orchestration, not for
+raw chat display:
 
 ```json
 {
@@ -129,6 +168,22 @@ Return one JSON object with these keys and no surrounding prose:
 For `action="ask"`, provide exactly one question and leave
 `search_query` empty. For `action="confirm"`, set the question to an empty
 string and include the comparison boundary and unresolved risks.
+
+If the platform cannot carry hidden structured state, keep the JSON available
+to the calling application but still present the user-facing response first.
+
+## Example Dialogue
+
+**User:** “帮我判断哪种方案最好。”
+
+**Assistant, ask response:** “为了确定‘最好’的判断标准：你最看重的是成本、效果、速度，还是其他可验证的结果？”
+
+**User:** “我要在预算不超过 10 万元的前提下，选效果最稳定且三个月内能落地的方案。”
+
+**Assistant, confirm response:** “我将比较预算不超过 10 万元、可在三个月内实施的候选方案，并以效果稳定性作为主要标准；如果不同方案的证据来源或评价口径不可比，会单独标出而不强行排名。请确认。”
+
+The machine handoff records the same goal, constraints, comparison boundary,
+remaining risks, and authorization state as JSON.
 
 ## Evidence and Safety Rules
 

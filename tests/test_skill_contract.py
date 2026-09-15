@@ -58,3 +58,27 @@ def test_skill_calibrates_claim_language_to_evidence_strength():
     ]
     for phrase in required:
         assert phrase in text, phrase
+
+
+def test_skill_has_concrete_discovery_scope_layered_output_and_example():
+    text = SKILL.read_text(encoding="utf-8").lower()
+    required = [
+        "vague goal",
+        "conflicting requirements",
+        "unclear success criteria",
+        "measurement, definition, comparability, or evidence risk",
+        "do not use this skill",
+        "user-facing response",
+        "machine handoff",
+        "ask response",
+        "confirm response",
+        "example dialogue",
+    ]
+    for phrase in required:
+        assert phrase in text, phrase
+
+
+def test_skill_does_not_require_json_to_be_shown_to_the_user():
+    text = SKILL.read_text(encoding="utf-8").lower()
+    assert "do not show the json contract to the user" in text
+    assert "no surrounding prose" not in text
